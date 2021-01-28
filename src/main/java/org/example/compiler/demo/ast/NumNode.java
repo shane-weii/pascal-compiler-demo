@@ -10,13 +10,13 @@ import org.example.compiler.demo.Token;
  * Description: 数字节点
  */
 public class NumNode implements AstNode {
-    private final int value;
+    private final Number value;
 
     public NumNode(Token token) {
-        this.value = (int) token.getValue();
+        this.value = (Number) token.getValue();
     }
 
-    public int getValue() {
+    public Number getValue() {
         return value;
     }
 

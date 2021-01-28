@@ -1,8 +1,6 @@
 package org.example.compiler.demo;
 
 import org.example.compiler.demo.exception.InvalidSyntaxException;
-import org.example.compiler.demo.Token;
-
 import java.util.HashMap;
 import java.util.Map;
 
@@ -24,15 +22,22 @@ public class Lexer {
     static {
         KEYWORD_TOKEN_MAP.put("BEGIN", new Token(BEGIN, "BEGIN"));
         KEYWORD_TOKEN_MAP.put("END", new Token(END, "END"));
+        KEYWORD_TOKEN_MAP.put("DIV", new Token(INTEGER_DIV, "DIV"));
+        KEYWORD_TOKEN_MAP.put("PROGRAM", new Token(PROGRAM, "PROGRAM"));
+        KEYWORD_TOKEN_MAP.put("VAR", new Token(VAR, "VAR"));
+        KEYWORD_TOKEN_MAP.put("INTEGER", new Token(INTEGER, "INTEGER"));
+        KEYWORD_TOKEN_MAP.put("REAL", new Token(REAL, "REAL"));
 
         SYMBOL_TOKEN_MAP.put("+", new Token(PLUS, "+"));
         SYMBOL_TOKEN_MAP.put("-", new Token(MINUS, "-"));
         SYMBOL_TOKEN_MAP.put("*", new Token(TIMES, "*"));
-        SYMBOL_TOKEN_MAP.put("/", new Token(DIV, "/"));
+        SYMBOL_TOKEN_MAP.put("/", new Token(FLOAT_DIV, "/"));
         SYMBOL_TOKEN_MAP.put("(", new Token(LEFT_PART, "("));
         SYMBOL_TOKEN_MAP.put(")", new Token(RIGHT_PART, ")"));
         SYMBOL_TOKEN_MAP.put(";", new Token(SEM, ";"));
         SYMBOL_TOKEN_MAP.put(".", new Token(DOT, "."));
+        SYMBOL_TOKEN_MAP.put(",", new Token(COMMA, ","));
+        SYMBOL_TOKEN_MAP.put(":", new Token(COLON, ":"));
         SYMBOL_TOKEN_MAP.put(":=", new Token(ASSIGN, ":="));
     }
 
@@ -51,12 +56,15 @@ public class Lexer {
                 skipSpaceAndNewline();
                 continue;
             }
+            if (isCommentStart(currentChar)) {
+                skipComment();
+                continue;
+            }
             if (isIdentifier(currentChar)) {
                 return getAlphaToken();
             }
             if (Character.isDigit(currentChar)) {
-                int value = getInt();
-                return new Token(INTEGER, value);
+                return number();
             }
             // := 处理
             if (currentChar == ':' && peek() == '=') {
@@ -75,6 +83,39 @@ public class Lexer {
         return new Token(EOF, null);
     }
 
+    private boolean isCommentStart(char currentChar) {
+        return currentChar == '{';
+    }
+
+    private boolean isCommentEnd(char currentChar) {
+        return currentChar == '}';
+    }
+
+    private void skipComment() {
+        while (currentChar != 0 && !isCommentEnd(currentChar)) {
+            advance();
+        }
+        advance();
+    }
+
+    private Token number() {
+        StringBuilder sb = new StringBuilder();
+        while (currentChar != 0 && Character.isDigit(currentChar)) {
+            sb.append(currentChar);
+            advance();
+        }
+        if (currentChar == '.') {
+            sb.append(currentChar);
+            advance();
+            while (currentChar != 0 && Character.isDigit(currentChar)) {
+                sb.append(currentChar);
+                advance();
+            }
+            return new Token(FLOAT_CONST, Double.valueOf(sb.toString()));
+        }
+        return new Token(INTEGER_CONST, Integer.valueOf(sb.toString()));
+    }
+
     private Token getAlphaToken() {
         StringBuilder sb = new StringBuilder();
         while (currentChar != 0 && isIdentifier(currentChar)) {
@@ -83,15 +124,6 @@ public class Lexer {
         }
         final String s = sb.toString();
         return KEYWORD_TOKEN_MAP.getOrDefault(s.toUpperCase(), new Token(ID, s));
-    }
-
-    private int getInt() {
-        int res = 0;
-        while (currentChar != 0 && Character.isDigit(currentChar)) {
-            res = res * 10 + currentChar - 0x30;
-            advance();
-        }
-        return res;
     }
 
     private void skipSpaceAndNewline() {

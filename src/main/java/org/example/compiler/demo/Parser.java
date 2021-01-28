@@ -5,6 +5,7 @@ import org.example.compiler.demo.exception.InvalidSyntaxException;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static org.example.compiler.demo.Token.Type.*;
 
@@ -37,26 +38,35 @@ public class Parser {
 
     /*******************************************************************************************************************/
     /**
-     * Pascal 语法规则：[第一版]
-     * program : compound_statement DOT
+     * Pascal 语法规则：[第二版]
+     * program : PROGRAM variable SEM BLOCK DOT
+     * block : declarations compound_statement
+     * declarations : VAR (variable_declaration SEM)+ | empty
+     * variable_declaration : ID(COMMA ID)* COLON variable_type
+     * variable_type : INTEGER | REAL
      * compound_statement : BEGIN statement_list END
      * statement_list : statement | statement (SEM statement)*
      * statement : compound_statement | assign_statement | empty
      * assign_statement : variable ASSIGN expr
      * empty :
-     * expr : term((PLUS|MINUS)term)*
-     * term : factor((TIMES|DIV)factor)*
-     * factor : (PLUS|MINUS)factor | INTEGER | LEFT expr RIGHT | variable
+     * expr : term((PLUS | MINUS)term)*
+     * term : factor((TIMES | INTEGER_DIV | FLOAT_DIV)factor)*
+     * factor : (PLUS|MINUS)factor | INTEGER_CONST | FLOAT_CONST | LEFT expr RIGHT | variable
+     * variable : ID
      */
     /******************************************************************************************************************/
 
     // factor : INTEGER | (PLUS|MINUS)factor | LEFT expr RIGHT | variable
     private AstNode factor() {
         switch (currentToken.getType()) {
-            case INTEGER:
-                NumNode numNode = new NumNode(currentToken);
-                eat(INTEGER);
-                return numNode;
+            case INTEGER_CONST:
+                NumNode intNode = new NumNode(currentToken);
+                eat(INTEGER_CONST);
+                return intNode;
+            case FLOAT_CONST:
+                NumNode floatNum = new NumNode(currentToken);
+                eat(FLOAT_CONST);
+                return floatNum;
             case LEFT_PART:
                 eat(LEFT_PART);
                 AstNode node = expr();
@@ -79,15 +89,72 @@ public class Parser {
         return null;
     }
 
-    // term : factor((TIMES|DIV)factor)*
+    // program : PROGRAM variable SEM BLOCK DOT
+    public ProgramNode program() {
+        eat(PROGRAM);
+        final VariableNode variable = variable();
+        eat(SEM);
+        final BlockNode block = block();
+        eat(DOT);
+        return new ProgramNode(variable.getValue(), block);
+    }
+
+    // block : declarations compound_statement
+    private BlockNode block() {
+        final List<VarDeclNode> declarations = declarations();
+        final CompoundStmNode compoundStmNode = compoundStatement();
+        return new BlockNode(declarations, compoundStmNode);
+    }
+
+    // declarations : VAR (variable_declaration SEM)+ | empty
+    private List<VarDeclNode> declarations() {
+        List<VarDeclNode> nodes = new ArrayList<>();
+        if (currentToken.getType() == VAR) {
+            eat(VAR);
+            while (currentToken.getType() == ID) {
+                final List<VarDeclNode> list = variableDeclaration();
+                nodes.addAll(list);
+                eat(SEM);
+            }
+        }
+        return nodes;
+    }
+
+    // variable_declaration : ID(COMMA ID)* COLON variable_type
+    private List<VarDeclNode> variableDeclaration() {
+        List<VariableNode> nodes = new ArrayList<>();
+        nodes.add(variable());
+        while (currentToken.getType() == COMMA) {
+            eat(COMMA);
+            nodes.add(variable());
+        }
+        eat(COLON);
+        final VarTypeNode type = variableType();
+        return nodes.stream().map(n -> new VarDeclNode(n, type)).collect(Collectors.toList());
+    }
+
+    // variable_type : INTEGER | REAL
+    private VarTypeNode variableType() {
+        final Token token = this.currentToken;
+        if (token.getType() == INTEGER) {
+            eat(INTEGER);
+        } else {
+            eat(REAL);
+        }
+        return new VarTypeNode(token);
+    }
+
+    // term : factor((TIMES | INTEGER_DIV | FLOAT_DIV)factor)*
     private AstNode term() {
         AstNode node = factor();
-        while (currentToken.getType() == TIMES || currentToken.getType() == DIV) {
+        while (currentToken.getType() == TIMES || currentToken.getType() == INTEGER_DIV || currentToken.getType() == FLOAT_DIV) {
             Token op = currentToken;
             if (op.getType() == TIMES) {
                 eat(TIMES);
+            } else if (op.getType() == INTEGER_DIV){
+                eat(INTEGER_DIV);
             } else {
-                eat(DIV);
+                eat(FLOAT_DIV);
             }
             node = new OpNode(node, op, factor());
         }
@@ -107,13 +174,6 @@ public class Parser {
             }
             node = new OpNode(node, op, term());
         }
-        return node;
-    }
-
-    // program : compound_statement DOT
-    public CompoundStmNode program() {
-        CompoundStmNode node = compoundStatement();
-        eat(DOT);
         return node;
     }
 

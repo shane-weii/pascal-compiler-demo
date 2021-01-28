@@ -56,4 +56,32 @@ public interface Visitor<T> {
      * @return
      */
     T visit(VariableNode node);
+
+    /***
+     * 解释 block
+     * @param node
+     * @return
+     */
+    T visit(BlockNode node);
+
+    /***
+     * 解释 program
+     * @param node
+     * @return
+     */
+    T visit(ProgramNode node);
+
+    /***
+     * 解释变量定义
+     * @param node
+     * @return
+     */
+    T visit(VarDeclNode node);
+
+    /***
+     * 解释变量类型
+     * @param node
+     * @return
+     */
+    T visit(VarTypeNode node);
 }
