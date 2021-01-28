@@ -96,7 +96,7 @@ public class Parser {
         eat(SEM);
         final BlockNode block = block();
         eat(DOT);
-        return new ProgramNode(variable.getValue(), block);
+        return new ProgramNode(variable.getName(), block);
     }
 
     // block : declarations compound_statement

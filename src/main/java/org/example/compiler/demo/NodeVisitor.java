@@ -1,7 +1,9 @@
 package org.example.compiler.demo;
 
 import org.example.compiler.demo.ast.*;
-import org.example.compiler.demo.exception.InvalidSyntaxException;
+import org.example.compiler.demo.exception.UndefinedSymbolException;
+import org.example.compiler.demo.symbol.BuiltinTypeSymbol;
+import org.example.compiler.demo.symbol.VariableSymbol;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -15,6 +17,15 @@ import java.util.Map;
  */
 public class NodeVisitor implements Visitor<Double> {
     private final Map<String, Double> variableTable = new HashMap<>();
+    private final SymbolTable symbolTable;
+
+    public NodeVisitor() {
+        this(new DefaultSymbolTable());
+    }
+
+    public NodeVisitor(SymbolTable symbolTable) {
+        this.symbolTable = symbolTable;
+    }
 
     @Override
     public Double visit(NumNode node) {
@@ -68,16 +79,19 @@ public class NodeVisitor implements Visitor<Double> {
     @Override
     public Double visit(AssignStmNode node) {
         final VariableNode left = node.getLeft();
+        if (symbolTable.lookup(left.getName()) == null) {
+            throw new UndefinedSymbolException(left.getName());
+        }
         final AstNode right = node.getRight();
-        variableTable.put(left.getValue(), right.accept(this));
+        variableTable.put(left.getName(), right.accept(this));
         return null;
     }
 
     @Override
     public Double visit(VariableNode node) {
-        final String variableId = node.getValue();
-        if (!variableTable.containsKey(variableId)) {
-            throw new InvalidSyntaxException("'" + variableId + "' undeclared (first use in this function)");
+        final String variableId = node.getName();
+        if (symbolTable.lookup(variableId) == null) {
+            throw new UndefinedSymbolException(variableId);
         }
         return variableTable.get(variableId);
     }
@@ -96,8 +110,20 @@ public class NodeVisitor implements Visitor<Double> {
         return node.getBlockNode().accept(this);
     }
 
+    /***
+     * 变量定义，存入符号表
+     * @param node
+     * @return
+     */
     @Override
     public Double visit(VarDeclNode node) {
+        final String type = node.getType().getType();
+        final BuiltinTypeSymbol typeSymbol = (BuiltinTypeSymbol) symbolTable.lookup(type);
+        if (typeSymbol == null) {
+            throw new UndefinedSymbolException(type);
+        }
+        final String name = node.getVariable().getName();
+        symbolTable.define(new VariableSymbol(name, typeSymbol));
         return null;
     }
 

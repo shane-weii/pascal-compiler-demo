@@ -10,14 +10,14 @@ import org.example.compiler.demo.Token;
  * Description:
  */
 public class VariableNode implements AstNode {
-    private final String value;
+    private final String name;
 
     public VariableNode(Token token) {
-        this.value = (String) token.getValue();
+        this.name = (String) token.getValue();
     }
 
-    public String getValue() {
-        return value;
+    public String getName() {
+        return name;
     }
 
     @Override

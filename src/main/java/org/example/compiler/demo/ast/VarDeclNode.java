@@ -17,6 +17,14 @@ public class VarDeclNode implements AstNode {
         this.type = type;
     }
 
+    public VariableNode getVariable() {
+        return variable;
+    }
+
+    public VarTypeNode getType() {
+        return type;
+    }
+
     @Override
     public <T> T accept(Visitor<T> visitor) {
         return visitor.visit(this);

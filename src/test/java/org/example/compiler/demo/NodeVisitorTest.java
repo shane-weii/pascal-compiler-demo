@@ -2,7 +2,9 @@ package org.example.compiler.demo;
 
 import org.example.compiler.demo.ast.CompoundStmNode;
 import org.example.compiler.demo.ast.ProgramNode;
+import org.example.compiler.demo.exception.UndefinedSymbolException;
 import org.junit.Test;
+import org.junit.function.ThrowingRunnable;
 
 import java.util.Map;
 
@@ -50,5 +52,20 @@ public class NodeVisitorTest {
         assertEquals(27, table.get("c").intValue());
         assertEquals(11, table.get("x").intValue());
         assertEquals(5.9971, table.get("y"), 4);
+    }
+
+    @Test
+    public void testUndefined() {
+        String code = "PROGRAM prog;\n" +
+                "VAR\n" +
+                "   a : INTEGER;\n" +
+                "\n" +
+                "BEGIN\n" +
+                "   a := 2 + b;\n" +
+                "END.";
+        Parser parser = new Parser(code);
+        NodeVisitor nodeVisitor = new NodeVisitor();
+        final ProgramNode program = parser.program();
+        assertThrows("undefined symbol 'b'", UndefinedSymbolException.class, () -> nodeVisitor.visit(program));
     }
 }

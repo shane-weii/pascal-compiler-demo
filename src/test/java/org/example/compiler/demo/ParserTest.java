@@ -49,6 +49,6 @@ public class ParserTest {
         node = (CompoundStmNode) node.getChildren().get(0);
         assertEquals(4, node.getChildren().size());
         AssignStmNode assignStmNode = (AssignStmNode) node.getChildren().get(0);
-        assertEquals("number", assignStmNode.getLeft().getValue());
+        assertEquals("number", assignStmNode.getLeft().getName());
     }
 }
