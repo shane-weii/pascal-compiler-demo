@@ -21,6 +21,8 @@ public class Token {
         END,
         // div 关键字
         INTEGER_DIV,
+        // PROCEDURE 关键字
+        PROCEDURE,
         // 分号 ';'
         SEM,
         // 赋值 ':='

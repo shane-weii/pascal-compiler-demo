@@ -16,13 +16,13 @@ import static org.junit.Assert.*;
 public class ParserTest {
     @Test
     public void test() {
-        String code = "PROGRAM prog;\n" +
+        String code = "PROGRAM Prog;\n" +
                 "VAR\n" +
                 "   number     : INTEGER;\n" +
                 "   a, b, c, x : INTEGER;\n" +
                 "   y          : REAL;\n" +
                 "\n" +
-                "BEGIN {prog}\n" +
+                "BEGIN {Prog}\n" +
                 "   BEGIN\n" +
                 "      number := 2;\n" +
                 "      a := number;\n" +
@@ -37,7 +37,7 @@ public class ParserTest {
                 "   { writeln('number = ', number); }\n" +
                 "   { writeln('x = ', x); }\n" +
                 "   { writeln('y = ', y); }\n" +
-                "END.  {Part10}";
+                "END.  {Prog}";
         Lexer lexer = new Lexer(code);
         Parser parser = new Parser(lexer);
         final ProgramNode program = parser.program();

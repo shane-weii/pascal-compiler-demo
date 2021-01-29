@@ -11,15 +11,15 @@ import java.util.List;
  * Description:
  */
 public class BlockNode implements AstNode {
-    private final List<VarDeclNode> declarations;
+    private final List<AstNode> declarations;
     private final CompoundStmNode compoundStmNode;
 
-    public BlockNode(List<VarDeclNode> declarations, CompoundStmNode compoundStmNode) {
+    public BlockNode(List<AstNode> declarations, CompoundStmNode compoundStmNode) {
         this.declarations = declarations;
         this.compoundStmNode = compoundStmNode;
     }
 
-    public List<VarDeclNode> getDeclarations() {
+    public List<AstNode> getDeclarations() {
         return declarations;
     }
 

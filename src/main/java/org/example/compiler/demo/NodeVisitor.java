@@ -98,7 +98,7 @@ public class NodeVisitor implements Visitor<Double> {
 
     @Override
     public Double visit(BlockNode node) {
-        final List<VarDeclNode> declarations = node.getDeclarations();
+        final List<AstNode> declarations = node.getDeclarations();
         final CompoundStmNode compoundStmNode = node.getCompoundStmNode();
         declarations.forEach(d -> d.accept(this));
         compoundStmNode.accept(this);
@@ -129,6 +129,11 @@ public class NodeVisitor implements Visitor<Double> {
 
     @Override
     public Double visit(VarTypeNode node) {
+        return null;
+    }
+
+    @Override
+    public Double visit(ProcedureDclNode node) {
         return null;
     }
 

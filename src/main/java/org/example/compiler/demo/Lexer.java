@@ -27,6 +27,7 @@ public class Lexer {
         KEYWORD_TOKEN_MAP.put("VAR", new Token(VAR, "VAR"));
         KEYWORD_TOKEN_MAP.put("INTEGER", new Token(INTEGER, "INTEGER"));
         KEYWORD_TOKEN_MAP.put("REAL", new Token(REAL, "REAL"));
+        KEYWORD_TOKEN_MAP.put("PROCEDURE", new Token(PROCEDURE, "PROCEDURE"));
 
         SYMBOL_TOKEN_MAP.put("+", new Token(PLUS, "+"));
         SYMBOL_TOKEN_MAP.put("-", new Token(MINUS, "-"));
@@ -60,8 +61,8 @@ public class Lexer {
                 skipComment();
                 continue;
             }
-            if (isIdentifier(currentChar)) {
-                return getAlphaToken();
+            if (Character.isLetter(currentChar)) {
+                return getIdentifierToken();
             }
             if (Character.isDigit(currentChar)) {
                 return number();
@@ -116,9 +117,9 @@ public class Lexer {
         return new Token(INTEGER_CONST, Integer.valueOf(sb.toString()));
     }
 
-    private Token getAlphaToken() {
+    private Token getIdentifierToken() {
         StringBuilder sb = new StringBuilder();
-        while (currentChar != 0 && isIdentifier(currentChar)) {
+        while (currentChar != 0 && Character.isLetterOrDigit(currentChar)) {
             sb.append(currentChar);
             advance();
         }
@@ -151,9 +152,5 @@ public class Lexer {
 
     private boolean isSpaceOrNewline(char c) {
         return Character.isSpaceChar(c) || c == '\n';
-    }
-
-    private boolean isIdentifier(char c) {
-        return Character.isAlphabetic(c);
     }
 }

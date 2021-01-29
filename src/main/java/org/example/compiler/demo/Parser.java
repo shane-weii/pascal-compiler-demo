@@ -41,7 +41,7 @@ public class Parser {
      * Pascal 语法规则：[第二版]
      * program : PROGRAM variable SEM BLOCK DOT
      * block : declarations compound_statement
-     * declarations : VAR (variable_declaration SEM)+ | empty
+     * declarations : VAR (variable_declaration SEM)+ | (PROCEDURE ID SEM block SEM)* | empty
      * variable_declaration : ID(COMMA ID)* COLON variable_type
      * variable_type : INTEGER | REAL
      * compound_statement : BEGIN statement_list END
@@ -101,14 +101,14 @@ public class Parser {
 
     // block : declarations compound_statement
     private BlockNode block() {
-        final List<VarDeclNode> declarations = declarations();
+        final List<AstNode> declarations = declarations();
         final CompoundStmNode compoundStmNode = compoundStatement();
         return new BlockNode(declarations, compoundStmNode);
     }
 
     // declarations : VAR (variable_declaration SEM)+ | empty
-    private List<VarDeclNode> declarations() {
-        List<VarDeclNode> nodes = new ArrayList<>();
+    private List<AstNode> declarations() {
+        List<AstNode> nodes = new ArrayList<>();
         if (currentToken.getType() == VAR) {
             eat(VAR);
             while (currentToken.getType() == ID) {
@@ -116,6 +116,15 @@ public class Parser {
                 nodes.addAll(list);
                 eat(SEM);
             }
+        }
+        while (currentToken.getType() == PROCEDURE) {
+            eat(PROCEDURE);
+            String name = (String) currentToken.getValue();
+            eat(ID);
+            eat(SEM);
+            final BlockNode block = block();
+            nodes.add(new ProcedureDclNode(name, block));
+            eat(SEM);
         }
         return nodes;
     }
