@@ -10,14 +10,14 @@ import org.example.compiler.demo.Visitor;
  * Description:
  */
 public class VarTypeNode implements AstNode {
-    private final String type;
+    private final String name;
 
     public VarTypeNode(Token token) {
-        this.type = (String) token.getValue();
+        this.name = (String) token.getValue();
     }
 
-    public String getType() {
-        return type;
+    public String getName() {
+        return name;
     }
 
     @Override

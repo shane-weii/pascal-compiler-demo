@@ -13,6 +13,6 @@ public class BuiltinTypeSymbol extends AbstractSymbol {
 
     @Override
     public String toString() {
-        return String.format("<%s>", getName());
+        return String.format("<%s(name='%s')>", this.getClass().getSimpleName(), getName());
     }
 }

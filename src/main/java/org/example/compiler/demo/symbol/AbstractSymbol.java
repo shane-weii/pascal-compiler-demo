@@ -9,13 +9,24 @@ import org.example.compiler.demo.Symbol;
  */
 public abstract class AbstractSymbol implements Symbol {
     private final String name;
+    private final String type;
 
-    public AbstractSymbol(String name) {
+    protected AbstractSymbol(String name) {
+        this(name, null);
+    }
+
+    protected AbstractSymbol(String name, String type) {
         this.name = name;
+        this.type = type;
     }
 
     @Override
     public String getName() {
         return name;
+    }
+
+    @Override
+    public String getType() {
+        return type;
     }
 }

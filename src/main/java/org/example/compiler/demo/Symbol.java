@@ -11,4 +11,10 @@ public interface Symbol {
      * @return
      */
     String getName();
+
+    /***
+     * 获取符号类型
+     * @return
+     */
+    String getType();
 }

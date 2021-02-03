@@ -91,4 +91,11 @@ public interface Visitor<T> {
      * @return
      */
     T visit(ProcedureDclNode node);
+
+    /***
+     * 解释过程参数变量
+     * @param node
+     * @return
+     */
+    T visit(ParamNode node);
 }

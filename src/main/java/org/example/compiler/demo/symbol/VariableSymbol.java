@@ -7,19 +7,12 @@ package org.example.compiler.demo.symbol;
  * Description:
  */
 public class VariableSymbol extends AbstractSymbol {
-    private final BuiltinTypeSymbol type;
-
     public VariableSymbol(String name, BuiltinTypeSymbol type) {
-        super(name);
-        this.type = type;
-    }
-
-    public BuiltinTypeSymbol getType() {
-        return type;
+        super(name, type.getName());
     }
 
     @Override
     public String toString() {
-        return String.format("<%s:%s>", getName(), getType());
+        return String.format("<%s(name='%s', type='%s')>", this.getClass().getSimpleName(), getName(), getType());
     }
 }

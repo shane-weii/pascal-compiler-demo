@@ -1,10 +1,6 @@
 package org.example.compiler.demo;
 
 import org.example.compiler.demo.ast.*;
-import org.example.compiler.demo.exception.UndefinedSymbolException;
-import org.example.compiler.demo.symbol.BuiltinTypeSymbol;
-import org.example.compiler.demo.symbol.VariableSymbol;
-
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -15,16 +11,19 @@ import java.util.Map;
  * @date 2021/1/25 11:28
  * Description: 简单解释运算表达式的访问者
  */
-public class NodeVisitor implements Visitor<Double> {
+public class Interpreter implements Visitor<Double> {
     private final Map<String, Double> variableTable = new HashMap<>();
-    private final SymbolTable symbolTable;
 
-    public NodeVisitor() {
-        this(new DefaultSymbolTable());
+    private final AstNode tree;
+
+    public Interpreter(AstNode tree) {
+        this.tree = tree;
     }
 
-    public NodeVisitor(SymbolTable symbolTable) {
-        this.symbolTable = symbolTable;
+    public void interpreter() {
+        if (tree != null) {
+            tree.accept(this);
+        }
     }
 
     @Override
@@ -79,9 +78,6 @@ public class NodeVisitor implements Visitor<Double> {
     @Override
     public Double visit(AssignStmNode node) {
         final VariableNode left = node.getLeft();
-        if (symbolTable.lookup(left.getName()) == null) {
-            throw new UndefinedSymbolException(left.getName());
-        }
         final AstNode right = node.getRight();
         variableTable.put(left.getName(), right.accept(this));
         return null;
@@ -89,11 +85,7 @@ public class NodeVisitor implements Visitor<Double> {
 
     @Override
     public Double visit(VariableNode node) {
-        final String variableId = node.getName();
-        if (symbolTable.lookup(variableId) == null) {
-            throw new UndefinedSymbolException(variableId);
-        }
-        return variableTable.get(variableId);
+        return variableTable.get(node.getName());
     }
 
     @Override
@@ -110,20 +102,8 @@ public class NodeVisitor implements Visitor<Double> {
         return node.getBlockNode().accept(this);
     }
 
-    /***
-     * 变量定义，存入符号表
-     * @param node
-     * @return
-     */
     @Override
     public Double visit(VarDeclNode node) {
-        final String type = node.getType().getType();
-        final BuiltinTypeSymbol typeSymbol = (BuiltinTypeSymbol) symbolTable.lookup(type);
-        if (typeSymbol == null) {
-            throw new UndefinedSymbolException(type);
-        }
-        final String name = node.getVariable().getName();
-        symbolTable.define(new VariableSymbol(name, typeSymbol));
         return null;
     }
 
@@ -137,7 +117,12 @@ public class NodeVisitor implements Visitor<Double> {
         return null;
     }
 
-    // 测试使用
+    @Override
+    public Double visit(ParamNode node) {
+        return null;
+    }
+
+    @VisibleForTesting
     protected Map<String, Double> getVariableTable() {
         return Collections.unmodifiableMap(variableTable);
     }
