@@ -1,14 +1,15 @@
 package org.example.compiler.demo;
 
 import org.example.compiler.demo.ast.*;
-import org.example.compiler.demo.exception.InvalidSyntaxException;
+import org.example.compiler.demo.exception.ErrorCode;
+import org.example.compiler.demo.exception.ParserException;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static org.example.compiler.demo.Token.Type.*;
+import static org.example.compiler.demo.TokenType.*;
 
 /**
  * @author Shane Wei
@@ -36,17 +37,17 @@ public class Parser {
     public AstNode parse() {
         final ProgramNode program = program();
         if (currentToken.getType() != EOF) {
-            throw new InvalidSyntaxException();
+            error(ErrorCode.UNEXPECTED_TOKEN, currentToken);
         }
         return program;
     }
 
-    private void eat(Token.Type type) {
+    private void eat(TokenType type) {
         if (currentToken.getType() == type) {
             currentToken = lexer.getNextToken();
             return;
         }
-        throw new InvalidSyntaxException("type match error, current type is " + currentToken.getType().name() + ", passed is " + type.name());
+        error(ErrorCode.UNEXPECTED_TOKEN, currentToken);
     }
 
     /*******************************************************************************************************************/
@@ -291,5 +292,16 @@ public class Parser {
         Token token = currentToken;
         eat(ID);
         return new VariableNode(token);
+    }
+
+    /***
+     * throws ParserException
+     * @param code
+     * @param token
+     * @throws ParserException
+     */
+    private void error(ErrorCode code, Token token) throws ParserException {
+        String message = String.format("%s -> %s", code.getMessage(), token);
+        throw new ParserException(message, code, token);
     }
 }

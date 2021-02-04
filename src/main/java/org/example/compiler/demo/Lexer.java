@@ -1,10 +1,11 @@
 package org.example.compiler.demo;
 
-import org.example.compiler.demo.exception.InvalidSyntaxException;
+import org.example.compiler.demo.exception.LexerException;
+
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.example.compiler.demo.Token.Type.*;
+import static org.example.compiler.demo.TokenType.*;
 
 /**
  * @author Shane Wei
@@ -15,39 +16,25 @@ public class Lexer {
     private final String text;
     private int currentPos;
     private char currentChar;
+    private int lineNo;
+    private int colNo;
 
     private static final Map<String, Token> KEYWORD_TOKEN_MAP = new HashMap<>();
-    private static final Map<String, Token> SYMBOL_TOKEN_MAP = new HashMap<>();
 
     static {
-        KEYWORD_TOKEN_MAP.put("BEGIN", new Token(BEGIN, "BEGIN"));
-        KEYWORD_TOKEN_MAP.put("END", new Token(END, "END"));
-        KEYWORD_TOKEN_MAP.put("DIV", new Token(INTEGER_DIV, "DIV"));
-        KEYWORD_TOKEN_MAP.put("PROGRAM", new Token(PROGRAM, "PROGRAM"));
-        KEYWORD_TOKEN_MAP.put("VAR", new Token(VAR, "VAR"));
-        KEYWORD_TOKEN_MAP.put("INTEGER", new Token(INTEGER, "INTEGER"));
-        KEYWORD_TOKEN_MAP.put("REAL", new Token(REAL, "REAL"));
-        KEYWORD_TOKEN_MAP.put("PROCEDURE", new Token(PROCEDURE, "PROCEDURE"));
-
-        SYMBOL_TOKEN_MAP.put("+", new Token(PLUS, "+"));
-        SYMBOL_TOKEN_MAP.put("-", new Token(MINUS, "-"));
-        SYMBOL_TOKEN_MAP.put("*", new Token(TIMES, "*"));
-        SYMBOL_TOKEN_MAP.put("/", new Token(FLOAT_DIV, "/"));
-        SYMBOL_TOKEN_MAP.put("(", new Token(LEFT_PART, "("));
-        SYMBOL_TOKEN_MAP.put(")", new Token(RIGHT_PART, ")"));
-        SYMBOL_TOKEN_MAP.put(";", new Token(SEM, ";"));
-        SYMBOL_TOKEN_MAP.put(".", new Token(DOT, "."));
-        SYMBOL_TOKEN_MAP.put(",", new Token(COMMA, ","));
-        SYMBOL_TOKEN_MAP.put(":", new Token(COLON, ":"));
-        SYMBOL_TOKEN_MAP.put(":=", new Token(ASSIGN, ":="));
+        final TokenType[] values = values();
+        // 关键字处理
+        for (int i = PROGRAM.ordinal(); i <= END.ordinal(); i++) {
+            TokenType type = values[i];
+            KEYWORD_TOKEN_MAP.put(type.value, new Token(type, type.value));
+        }
     }
 
     public Lexer(String text) {
-        if (text == null || text.length() == 0) {
-            throw new IllegalArgumentException("text cannot be empty");
-        }
         this.text = text;
         currentPos = 0;
+        lineNo = 1;
+        colNo = 1;
         currentChar = text.charAt(currentPos);
     }
 
@@ -71,13 +58,14 @@ public class Lexer {
             if (currentChar == ':' && peek() == '=') {
                 advance();
                 advance();
-                return SYMBOL_TOKEN_MAP.get(":=");
+                return new Token(ASSIGN, ":=", lineNo, colNo);
             }
             // 单字符处理
-            final Token token = SYMBOL_TOKEN_MAP.get("" + currentChar);
-            if (token == null) {
-                throw new InvalidSyntaxException("invalid character '" + currentChar + "'");
+            final TokenType type = getByValue("" + currentChar);
+            if (type == null) {
+                error();
             }
+            Token token = new Token(type, type.value, lineNo, colNo);
             advance();
             return token;
         }
@@ -112,9 +100,9 @@ public class Lexer {
                 sb.append(currentChar);
                 advance();
             }
-            return new Token(FLOAT_CONST, Double.valueOf(sb.toString()));
+            return new Token(FLOAT_CONST, Double.valueOf(sb.toString()), lineNo, colNo);
         }
-        return new Token(INTEGER_CONST, Integer.valueOf(sb.toString()));
+        return new Token(INTEGER_CONST, Integer.valueOf(sb.toString()), lineNo, colNo);
     }
 
     private Token getIdentifierToken() {
@@ -124,7 +112,7 @@ public class Lexer {
             advance();
         }
         final String s = sb.toString();
-        return KEYWORD_TOKEN_MAP.getOrDefault(s.toUpperCase(), new Token(ID, s));
+        return KEYWORD_TOKEN_MAP.getOrDefault(s.toUpperCase(), new Token(ID, s, lineNo, colNo));
     }
 
     private void skipSpaceAndNewline() {
@@ -134,8 +122,14 @@ public class Lexer {
     }
 
     private void advance() {
+        if (currentChar == '\n') {
+            lineNo++;
+            colNo = 0;
+        }
+
         currentPos++;
         if (currentPos < text.length()) {
+            colNo++;
             currentChar = text.charAt(currentPos);
         } else {
             currentChar = 0;
@@ -148,6 +142,15 @@ public class Lexer {
             return text.charAt(pos);
         }
         return 0;
+    }
+
+    /***
+     * throws LexerException
+     * @throws LexerException
+     */
+    private void error() throws LexerException {
+        String message = String.format("Lexer error on '%s' line: %d column: %d", currentChar, lineNo, colNo);
+        throw new LexerException(message);
     }
 
     private boolean isSpaceOrNewline(char c) {

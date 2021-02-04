@@ -1,7 +1,10 @@
 package org.example.compiler.demo;
 
+import org.example.compiler.demo.exception.LexerException;
+import org.example.compiler.demo.exception.SemanticException;
 import org.junit.Assert;
 import org.junit.Test;
+import org.junit.function.ThrowingRunnable;
 
 import java.io.BufferedReader;
 import java.io.FileInputStream;
@@ -16,7 +19,7 @@ import java.io.InputStreamReader;
 public class InterpreterTest {
     @Test
     public void test() {
-        String code = load();
+        String code = load("src/test/resources/main_test.pas");
         final Lexer lexer = new Lexer(code);
         final Parser parser = new Parser(lexer);
         final AstNode tree = parser.parse();
@@ -29,11 +32,26 @@ public class InterpreterTest {
         Assert.assertEquals(22, intr.getVariableTable().get("c"), 0);
     }
 
-    public String load() {
-        System.out.println();
-        String path = "src/test/resources/test.pas";
+    @Test
+    public void testDupErr() {
+        String code = load("src/test/resources/dup_err.pas");
+        final Lexer lexer = new Lexer(code);
+        final Parser parser = new Parser(lexer);
+        final AstNode tree = parser.parse();
+        SemanticAnalyzer analyzer = new SemanticAnalyzer();
+        Assert.assertThrows(SemanticException.class, () -> tree.accept(analyzer));
+    }
+
+    @Test
+    public void testLexerErr() {
+        String code = load("src/test/resources/lexer_err.pas");
+        final Lexer lexer = new Lexer(code);
+        final Parser parser = new Parser(lexer);
+        Assert.assertThrows(LexerException.class, parser::parse);
+    }
+
+    public String load(String path) {
         StringBuilder sb = new StringBuilder();
-        char[] buf = new char[1024];
         String s;
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(path)))) {
             while ((s = reader.readLine()) != null) {

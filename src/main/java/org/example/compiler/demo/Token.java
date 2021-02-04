@@ -6,64 +6,23 @@ package org.example.compiler.demo;
  * Description:
  */
 public class Token {
-    enum Type {
-        // program 关键字
-        PROGRAM,
-        // var 关键字
-        VAR,
-        // INTEGER 关键字，整数类型
-        INTEGER,
-        // REAL 关键字，实数类型
-        REAL,
-        // begin 关键字
-        BEGIN,
-        // end 关键字
-        END,
-        // div 关键字
-        INTEGER_DIV,
-        // PROCEDURE 关键字
-        PROCEDURE,
-        // 分号 ';'
-        SEM,
-        // 赋值 ':='
-        ASSIGN,
-        // 点号 '.'
-        DOT,
-        // 冒号 ':'
-        COLON,
-        // 逗号 ','
-        COMMA,
-        // 标识符ID
-        ID,
-        // 整数常数
-        INTEGER_CONST,
-        // 浮点数常数
-        FLOAT_CONST,
-        // '+'
-        PLUS,
-        // '-'
-        MINUS,
-        // '*'
-        TIMES,
-        // '/'
-        FLOAT_DIV,
-        // '('
-        LEFT_PART,
-        // ')'
-        RIGHT_PART,
-        // 结束
-        EOF
+    private final TokenType type;
+    private final Object value;
+    private final Integer lineNo;
+    private final Integer column;
+
+    public Token(TokenType type, Object value) {
+        this(type, value, null, null);
     }
 
-    private final Type type;
-    private final Object value;
-
-    public Token(Type type, Object value) {
+    public Token(TokenType type, Object value, Integer lineNo, Integer column) {
         this.type = type;
         this.value = value;
+        this.lineNo = lineNo;
+        this.column = column;
     }
 
-    public Type getType() {
+    public TokenType getType() {
         return type;
     }
 
@@ -73,6 +32,6 @@ public class Token {
 
     @Override
     public String toString() {
-        return String.format("Token(%s, %s)", type, value);
+        return String.format("Token(%s, %s, position = %d:%d)", type, value, lineNo, column);
     }
 }

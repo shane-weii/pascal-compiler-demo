@@ -1,8 +1,8 @@
 package org.example.compiler.demo;
 
 import org.example.compiler.demo.ast.*;
-import org.example.compiler.demo.exception.DuplicateIdentifierException;
-import org.example.compiler.demo.exception.UndefinedSymbolException;
+import org.example.compiler.demo.exception.ErrorCode;
+import org.example.compiler.demo.exception.SemanticException;
 import org.example.compiler.demo.symbol.BuiltinTypeSymbol;
 import org.example.compiler.demo.symbol.ProcedureSymbol;
 import org.example.compiler.demo.symbol.VariableSymbol;
@@ -65,7 +65,7 @@ public class SemanticAnalyzer implements Visitor<Void> {
     public Void visit(VariableNode node) {
         String varName = node.getName();
         if (currentScope.lookup(varName) == null) {
-            throw new UndefinedSymbolException(varName);
+            error(ErrorCode.ID_NOT_FOUND, node.getToken());
         }
         return null;
     }
@@ -81,18 +81,18 @@ public class SemanticAnalyzer implements Visitor<Void> {
 
     @Override
     public Void visit(ProgramNode node) {
-        log.info("ENTER scope : global");
+        log.debug("ENTER scope : global");
         final ScopedSymbolTable scopeTable = new ScopedSymbolTable("global", 1, currentScope);
         scopeTable.initBuiltinSymbols();
         currentScope = scopeTable;
 
         // 访问树
         node.getBlockNode().accept(this);
-        log.info(scopeTable.toString());
+        log.debug(scopeTable.toString());
 
         // 还原位置，类似于出栈
         currentScope = currentScope.getParentScope();
-        log.info("EXIT scope : global");
+        log.debug("EXIT scope : global");
         return null;
     }
 
@@ -100,22 +100,11 @@ public class SemanticAnalyzer implements Visitor<Void> {
     public Void visit(VarDeclNode node) {
         final String typeName = node.getType().getName();
         final Symbol type = currentScope.lookup(typeName);
-        if (type == null) {
-            throw new UndefinedSymbolException(typeName);
-        }
-        BuiltinTypeSymbol builtInType;
-        try {
-            builtInType = (BuiltinTypeSymbol) type;
-        } catch (Exception e) {
-            throw new UndefinedSymbolException(typeName);
-        }
-
         final String varName = node.getVariable().getName();
         if (currentScope.lookup(varName, true) != null) {
-            throw new DuplicateIdentifierException(varName);
+            error(ErrorCode.DUPLICATE_ID, node.getVariable().getToken());
         }
-
-        final VariableSymbol variableSymbol = new VariableSymbol(varName, builtInType);
+        final VariableSymbol variableSymbol = new VariableSymbol(varName, (BuiltinTypeSymbol) type);
         currentScope.define(variableSymbol);
         return null;
     }
@@ -130,38 +119,40 @@ public class SemanticAnalyzer implements Visitor<Void> {
         final String procName = node.getName();
         final ProcedureSymbol procedureSymbol = new ProcedureSymbol(procName);
         currentScope.define(procedureSymbol);
-        log.info("ENTER scope : {}", procName);
+        log.debug("ENTER scope : {}", procName);
         final ScopedSymbolTable procScope = new ScopedSymbolTable(procName, currentScope.getScopeLevel() + 1, currentScope);
         currentScope = procScope;
 
         for (ParamNode param : node.getParams()) {
             Symbol typeSym = currentScope.lookup(param.getType().getName());
-            if (typeSym == null) {
-                throw new UndefinedSymbolException(param.getType().getName());
-            }
-            BuiltinTypeSymbol builtInType;
-            try {
-                builtInType = (BuiltinTypeSymbol) typeSym;
-            } catch (Exception e) {
-                throw new UndefinedSymbolException(param.getType().getName());
-            }
-            final VariableSymbol varSym = new VariableSymbol(param.getVariable().getName(), builtInType);
+            final VariableSymbol varSym = new VariableSymbol(param.getVariable().getName(), (BuiltinTypeSymbol) typeSym);
             currentScope.define(varSym);
             procedureSymbol.getParams().add(varSym);
         }
         // visit block node
         node.getBlockNode().accept(this);
-        log.info(procScope.toString());
+        log.debug(procScope.toString());
 
         // 还原现场
         currentScope = currentScope.getParentScope();
 
-        log.info("EXIT scope : {}", procName);
+        log.debug("EXIT scope : {}", procName);
         return null;
     }
 
     @Override
     public Void visit(ParamNode node) {
         return null;
+    }
+
+    /***
+     * throws SemanticException
+     * @param code
+     * @param token
+     * @throws SemanticException
+     */
+    public void error(ErrorCode code, Token token) throws SemanticException {
+        String message = String.format("%s -> %s", code.getMessage(), token);
+        throw new SemanticException(message, code, token);
     }
 }

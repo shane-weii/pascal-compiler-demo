@@ -6,6 +6,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static org.example.compiler.demo.TokenType.*;
+
 /**
  * @author Shane Wei
  * @date 2021/1/25 11:28
@@ -35,15 +37,15 @@ public class Interpreter implements Visitor<Double> {
     public Double visit(OpNode node) {
         final AstNode left = node.getLeft();
         final AstNode right = node.getRight();
-        final Token.Type opType = node.getOp().getType();
+        final TokenType opType = node.getOp().getType();
         double res = 0;
-        if (opType == Token.Type.PLUS) {
+        if (opType == PLUS) {
             res = left.accept(this) + right.accept(this);
-        } else if (opType == Token.Type.MINUS) {
+        } else if (opType == MINUS) {
             res = left.accept(this) - right.accept(this);
-        } else if (opType == Token.Type.TIMES) {
+        } else if (opType == TIMES) {
             res = left.accept(this) * right.accept(this);
-        } else if (opType == Token.Type.INTEGER_DIV){
+        } else if (opType == INTEGER_DIV){
             res = left.accept(this).intValue() / right.accept(this).intValue();
         } else {
             res = left.accept(this) / right.accept(this);
@@ -55,7 +57,7 @@ public class Interpreter implements Visitor<Double> {
     public Double visit(UnaryOpNode node) {
         final AstNode expr = node.getExpr();
         double value = expr.accept(this);
-        if (node.getOp().getType() == Token.Type.MINUS) {
+        if (node.getOp().getType() == MINUS) {
             value = -value;
         }
         return value;

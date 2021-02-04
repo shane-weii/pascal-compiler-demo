@@ -12,12 +12,19 @@ import org.example.compiler.demo.Token;
 public class VariableNode implements AstNode {
     private final String name;
 
+    private final Token token;
+
     public VariableNode(Token token) {
         this.name = (String) token.getValue();
+        this.token = token;
     }
 
     public String getName() {
         return name;
+    }
+
+    public Token getToken() {
+        return token;
     }
 
     @Override
